@@ -3,40 +3,68 @@ name: Catalogue
 on:
   push:
     branches:
-      - master
+      - practice
     paths:
       - '**.js'  # Only trigger on changes to Python files (**.py)
       - '.github/workflows/catalogue.yaml'  # Include workflow file changes
 
   pull_request:
     branches:
-      - master
+      - practice
     paths:
       - '**.js'  # Only trigger on changes to Python files (**.py)
       - '.github/workflows/catalogue.yaml'  # Include workflow file changes
 
 jobs:
-  payment:
+  catalogue:
     name: Build and deploy catalogue microservice
-    runs-on: [self-hosted]  # Use a standard runner instead of self-hosted
+    runs-on: ubuntu-latest  # Use a standard runner ubuntu-latest
 
     steps:
       - name: Checkout code 
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }} # Allow access to the code
+ 
+      # Setup the Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14'
 
       - name: NPM install
         run: npm install 
+      
+      # Set up docker buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-docker-action@v4
 
-      - name: Build Docker image
+      # Docker login
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        
+      # Docker build and push
+
+      - name: Build and push the Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./catalogue
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/catalogue:${{ github.run_id }}
+
+      # Update the new tag in the helm chart
+      - name: Update the tag in the helm chart
         run: |
-          docker build -t catalogue .  # Build image tagged as 'payment' from current directory
+          sed -i 's/cataloguetag: .*/cataloguetag: "${{ github.run_id }}"/' EKS/helm/values.yaml
 
-      - name: Docker Login (use secrets)
-        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Docker Push
+      # Commit and push the new code
+      - name: Lets commit and push the new code
         run: |
-          docker tag catalogue ${name}/catalogue:latest
-          docker catalogue ${name}/catalogue:latest
+          git config --global user.email "narsss1234@gmail.com"
+          git config --global user.name "satya"
+          git add EKS/helm/values.yaml
+          git commit -m "Updated catalogue tag"
+          git push

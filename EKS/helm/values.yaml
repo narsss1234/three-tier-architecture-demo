@@ -1,7 +1,7 @@
 # Registry and repository for Docker images
 # Default is docker/robotshop/image:latest
 image:
-  repo: robotshop
+  repo: narsss1234
   version: latest
   pullPolicy: IfNotPresent
 
@@ -33,11 +33,20 @@ ocCreateRoute: false
 #   tolerations: []
 ######################################
 
-cart: {}
+cart:
+  image: cart
+  carttag: "latest"
+  imagePullPolicy: IfNotPresent
 
-catalogue: {}
+catalogue: 
+  image: catalogue
+  cataloguetag: "latest"
+  imagePullPolicy: IfNotPresent
 
-dispatch: {}
+dispatch: 
+  image: dispatch
+  dispatchtag: "latest"
+  imagePullPolicy: IfNotPresent
 
 mongodb: {}
 
