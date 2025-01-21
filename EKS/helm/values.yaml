@@ -35,7 +35,7 @@ ocCreateRoute: false
 
 cart:
   image: cart
-  carttag: "latest"
+  carttag: "12884738837"
   imagePullPolicy: IfNotPresent
 
 catalogue: 
